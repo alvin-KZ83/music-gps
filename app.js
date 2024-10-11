@@ -1,6 +1,25 @@
 let currentPosition = null;
 let currentHeading = null;
 
+// Function to request motion sensor permission (for iOS)
+function requestSensorPermission() {
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+            .then(permissionState => {
+                if (permissionState === 'granted') {
+                    // Listen for device orientation changes (gyroscope data)
+                    window.addEventListener('deviceorientation', updateHeading, true);
+                } else {
+                    alert("Permission to access motion sensors was denied.");
+                }
+            })
+            .catch(console.error);
+    } else {
+        // If not on iOS, continue listening for device orientation
+        window.addEventListener('deviceorientation', updateHeading, true);
+    }
+}
+
 // Function to update the user's location
 function updatePosition(position) {
     currentPosition = {
@@ -56,5 +75,5 @@ navigator.geolocation.watchPosition(updatePosition, (error) => {
     timeout: 5000
 });
 
-// Listen for device orientation changes (gyroscope data)
-window.addEventListener('deviceorientation', updateHeading, true);
+// Request motion sensor permission when the button is clicked
+document.getElementById('sensor-permission').addEventListener('click', requestSensorPermission);
