@@ -117,7 +117,7 @@ function checkDirection() {
         if (headingDifference <= tolerance) {
             document.getElementById("step").innerText = `Good! Facing correct direction (${requiredHeading}°). Walk ${directions[currentStep].distance} meters.`;
         } else {
-            document.getElementById("step").innerText = `Turn to face ${requiredHeading}°.`;
+            document.getElementById("step").innerText = `Turn to face ${requiredHeading}°.\nCurrent difference ${headingDifference}°.`;
         }
     }
 }
