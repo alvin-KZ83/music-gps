@@ -10,6 +10,8 @@ const directions = [
     { heading: 180, distance: 75 }   // Head south and walk 75 meters
 ];
 let currentStep = 0;
+let audioCtx = null;
+let oscillator = null;
 
 // Function to request motion sensor permission (for iOS)
 function requestSensorPermission() {
@@ -122,7 +124,29 @@ function checkDirection() {
     }
 }
 
+// Function to adjust pitch based on heading difference
+function adjustPitch(headingDifference, tolerance) {
+    // If there's no audio context yet, initialize it
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        oscillator = audioCtx.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.connect(audioCtx.destination);
+        oscillator.start();
+    }
 
+    // Map the heading difference to pitch: greater difference = lower pitch
+    // Assume that tolerance = 15 degrees means the note is C4, and as deviation increases, the pitch lowers
+    const minPitch = tonal.Note.freq("C2");
+    const maxPitch = tonal.Note.freq("C4");
+    
+    // Calculate the new frequency based on how far the user is from the correct heading
+    const normalizedDifference = Math.min(headingDifference / tolerance, 1); // 0 to 1
+    const frequency = maxPitch - (normalizedDifference * (maxPitch - minPitch));
+
+    // Update the oscillator frequency
+    oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+}
 
 // Function to display the current step information
 function updateStepInfo() {
