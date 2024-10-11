@@ -14,16 +14,23 @@ const directions = [
 ];
 let currentStep = 0;
 
+// Ensure the Tone.js context is resumed after user interaction
+document.getElementById('sensor-permission').addEventListener('click', async function() {
+    await Tone.start();
+    console.log('Tone.js Audio context resumed');
+    requestSensorPermission();
+});
+
 // Function to request motion sensor permission and enable audio on user interaction
 function requestSensorPermission() {
     // Create the audio context and oscillator after user interaction
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
+
         // Explicitly resume the audio context after user interaction
         if (audioCtx.state === 'suspended') {
             audioCtx.resume().then(() => {
-                console.log('Audio context resumed');
+                console.log('Web Audio context resumed');
                 startOscillator();
             });
         } else {
@@ -153,9 +160,8 @@ function adjustPitch(headingDifference, tolerance) {
     if (!audioCtx || !oscillator) return;
 
     // Map the heading difference to pitch: greater difference = lower pitch
-    // Assume that tolerance = 15 degrees means the note is C4, and as deviation increases, the pitch lowers
-    const minPitch = tonal.Note.freq("C2");
-    const maxPitch = tonal.Note.freq("C4");
+    const minPitch = Tone.Frequency("C2").toFrequency();
+    const maxPitch = Tone.Frequency("C4").toFrequency();
     
     // Calculate the new frequency based on how far the user is from the correct heading
     const normalizedDifference = Math.min(headingDifference / tolerance, 1); // 0 to 1
@@ -179,9 +185,6 @@ navigator.geolocation.watchPosition(updatePosition, (error) => {
     maximumAge: 0,
     timeout: 5000
 });
-
-// Request motion sensor permission and start the audio context when the button is clicked
-document.getElementById('sensor-permission').addEventListener('click', requestSensorPermission);
 
 // Initialize the first step
 updateStepInfo();
