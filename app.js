@@ -1,3 +1,5 @@
+// JavaScript
+
 let currentPosition = null;
 let currentHeading = null;
 let startPosition = null;
@@ -15,34 +17,43 @@ const directions = [
 ];
 let currentStep = 0;
 
-// Ensure the Tone.js context is resumed after user interaction
-document.getElementById('sensor-permission').addEventListener('click', async function() {
-    await Tone.start();
-    console.log('Tone.js Audio context resumed');
-    requestSensorPermission();
-});
-
-// Function to request motion sensor permission and enable audio on user interaction
-function requestSensorPermission() {
-    // Create the audio context and oscillator after user interaction
+// Ensure the Web Audio API context is resumed and permission is requested on button click
+document.getElementById('sensor-permission').addEventListener('click', function() {
+    // Start the audio context
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    // Request motion sensor permission (for iOS)
+    // Request motion sensor permission (for iOS or permission-restricted devices)
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
             .then(permissionState => {
                 if (permissionState === 'granted') {
+                    console.log('Motion sensor permission granted.');
                     window.addEventListener('deviceorientation', updateHeading, true);
                 } else {
-                    alert("Permission to access motion sensors was denied.");
+                    alert('Permission to access motion sensors was denied.');
                 }
             })
             .catch(console.error);
     } else {
+        // If permission is not required, add the event listener directly
         window.addEventListener('deviceorientation', updateHeading, true);
     }
+
+    // Start tracking user's position
+    startGeolocationTracking();
+});
+
+// Function to start geolocation tracking
+function startGeolocationTracking() {
+    navigator.geolocation.watchPosition(updatePosition, (error) => {
+        console.error("Geolocation error:", error);
+    }, {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 5000
+    });
 }
 
 // Function to start the oscillator (sound generation) for dynamic pitch
@@ -185,15 +196,6 @@ function updateStepInfo() {
     const stepInfo = directions[currentStep];
     document.getElementById("step").innerText = `Face ${stepInfo.heading}° and walk ${stepInfo.distance} meters.`;
 }
-
-// Track the user's position in real time
-navigator.geolocation.watchPosition(updatePosition, (error) => {
-    console.error("Geolocation error:", error);
-}, {
-    enableHighAccuracy: true,
-    maximumAge: 0,
-    timeout: 5000
-});
 
 // Initialize the first step
 updateStepInfo();
