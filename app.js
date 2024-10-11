@@ -19,10 +19,16 @@ function requestSensorPermission() {
     // Create the audio context and oscillator after user interaction
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        oscillator = audioCtx.createOscillator();
-        oscillator.type = 'sine';
-        oscillator.connect(audioCtx.destination);
-        oscillator.start();
+        
+        // Explicitly resume the audio context after user interaction
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().then(() => {
+                console.log('Audio context resumed');
+                startOscillator();
+            });
+        } else {
+            startOscillator();
+        }
     }
 
     // Request motion sensor permission (for iOS)
@@ -39,6 +45,14 @@ function requestSensorPermission() {
     } else {
         window.addEventListener('deviceorientation', updateHeading, true);
     }
+}
+
+// Function to start the oscillator (sound generation)
+function startOscillator() {
+    oscillator = audioCtx.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.connect(audioCtx.destination);
+    oscillator.start();
 }
 
 // Function to update the user's location
