@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Direction Navigation</title>
+    <title>Prebuilt Directions Navigation</title>
     <style>
-        #steps, #direction, #progress {
+        #direction, #steps, #progress {
             margin-top: 20px;
             font-size: 18px;
             background-color: #f0f0f0;
@@ -17,11 +17,11 @@
     </style>
 </head>
 <body>
-    <h1>Navigation with Prebuilt Directions</h1>
+    <h1>Follow Prebuilt Directions</h1>
     <button id="sensor-permission">Enable Motion Sensors</button>
-    <div id="direction">Current heading: <span id="heading"></span></div>
-    <div id="steps">Next Step: <span id="next-step"></span></div>
-    <div id="progress">Distance covered: <span id="distance-covered"></span> meters</div>
+    <div id="current-direction">Current Step: <span id="step"></span></div>
+    <div id="heading-info">Your current heading: <span id="heading"></span>°</div>
+    <div id="progress">Distance left: <span id="distance-left"></span> meters</div>
     
     <script src="app.js"></script>
 </body>
