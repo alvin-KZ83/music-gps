@@ -100,13 +100,23 @@ function checkDirection() {
         const requiredHeading = directions[currentStep].heading;
         const tolerance = 15; // Allow some tolerance in degrees
 
-        if (Math.abs(currentHeading - requiredHeading) <= tolerance) {
+        // Calculate the difference between the current heading and the required heading
+        let headingDifference = Math.abs(currentHeading - requiredHeading);
+
+        // Adjust for wrapping around 360 degrees
+        if (headingDifference > 180) {
+            headingDifference = 360 - headingDifference;
+        }
+
+        // Check if the difference is within the tolerance range
+        if (headingDifference <= tolerance) {
             document.getElementById("step").innerText = `Good! Facing correct direction (${requiredHeading}°). Walk ${directions[currentStep].distance} meters.`;
         } else {
             document.getElementById("step").innerText = `Turn to face ${requiredHeading}°.`;
         }
     }
 }
+
 
 // Function to display the current step information
 function updateStepInfo() {
