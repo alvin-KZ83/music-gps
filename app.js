@@ -3,6 +3,9 @@ let currentHeading = null;
 let startPosition = null;
 let distanceCovered = 0;
 
+let audioCtx = null;
+let oscillator = null;
+
 // Prebuilt directions: List of steps (heading in degrees and distance to walk)
 const directions = [
     { heading: 0, distance: 50 },   // Head north and walk 50 meters
@@ -10,11 +13,19 @@ const directions = [
     { heading: 180, distance: 75 }   // Head south and walk 75 meters
 ];
 let currentStep = 0;
-let audioCtx = null;
-let oscillator = null;
 
-// Function to request motion sensor permission (for iOS)
+// Function to request motion sensor permission and enable audio on user interaction
 function requestSensorPermission() {
+    // Create the audio context and oscillator after user interaction
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        oscillator = audioCtx.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.connect(audioCtx.destination);
+        oscillator.start();
+    }
+
+    // Request motion sensor permission (for iOS)
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
             .then(permissionState => {
@@ -110,30 +121,22 @@ function checkDirection() {
             headingDifference = 360 - headingDifference;
         }
 
-        // Debug: Log the current heading, required heading, and the calculated difference
-        console.log(`Current Heading: ${currentHeading}`);
-        console.log(`Required Heading: ${requiredHeading}`);
-        console.log(`Heading Difference: ${headingDifference}`);
+        // Adjust pitch based on heading difference
+        adjustPitch(headingDifference, tolerance);
 
         // Check if the difference is within the tolerance range
         if (headingDifference <= tolerance) {
             document.getElementById("step").innerText = `Good! Facing correct direction (${requiredHeading}°). Walk ${directions[currentStep].distance} meters.`;
         } else {
-            document.getElementById("step").innerText = `Turn to face ${requiredHeading}°.\nCurrent difference ${headingDifference}°.`;
+            document.getElementById("step").innerText = `Turn to face ${requiredHeading}°.`;
         }
     }
 }
 
 // Function to adjust pitch based on heading difference
 function adjustPitch(headingDifference, tolerance) {
-    // If there's no audio context yet, initialize it
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        oscillator = audioCtx.createOscillator();
-        oscillator.type = 'sine';
-        oscillator.connect(audioCtx.destination);
-        oscillator.start();
-    }
+    // If the audio context is not initialized, exit
+    if (!audioCtx || !oscillator) return;
 
     // Map the heading difference to pitch: greater difference = lower pitch
     // Assume that tolerance = 15 degrees means the note is C4, and as deviation increases, the pitch lowers
@@ -163,7 +166,7 @@ navigator.geolocation.watchPosition(updatePosition, (error) => {
     timeout: 5000
 });
 
-// Request motion sensor permission when the button is clicked
+// Request motion sensor permission and start the audio context when the button is clicked
 document.getElementById('sensor-permission').addEventListener('click', requestSensorPermission);
 
 // Initialize the first step
