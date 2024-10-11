@@ -5,6 +5,7 @@ let distanceCovered = 0;
 
 let audioCtx = null;
 let oscillator = null;
+let isPlaying = false;  // Track if sound is currently playing
 
 // Prebuilt directions: List of steps (heading in degrees and distance to walk)
 const directions = [
@@ -26,16 +27,6 @@ function requestSensorPermission() {
     // Create the audio context and oscillator after user interaction
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        // Explicitly resume the audio context after user interaction
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume().then(() => {
-                console.log('Web Audio context resumed');
-                startOscillator();
-            });
-        } else {
-            startOscillator();
-        }
     }
 
     // Request motion sensor permission (for iOS)
@@ -54,12 +45,25 @@ function requestSensorPermission() {
     }
 }
 
-// Function to start the oscillator (sound generation)
-function startOscillator() {
-    oscillator = audioCtx.createOscillator();
-    oscillator.type = 'sine';
-    oscillator.connect(audioCtx.destination);
-    oscillator.start();
+// Function to start the oscillator (sound generation) for dynamic pitch
+function startOscillator(frequency) {
+    if (audioCtx && !isPlaying) {
+        oscillator = audioCtx.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+        oscillator.connect(audioCtx.destination);
+        oscillator.start();
+        isPlaying = true;
+    }
+}
+
+// Function to stop the oscillator
+function stopOscillator() {
+    if (oscillator && isPlaying) {
+        oscillator.stop();
+        oscillator.disconnect();
+        isPlaying = false;
+    }
 }
 
 // Function to update the user's location
@@ -148,6 +152,7 @@ function checkDirection() {
         // Check if the difference is within the tolerance range
         if (headingDifference <= tolerance) {
             document.getElementById("step").innerText = `Good! Facing correct direction (${requiredHeading}°). Walk ${directions[currentStep].distance} meters.`;
+            stopOscillator();  // Stop sound when facing the correct direction
         } else {
             document.getElementById("step").innerText = `Turn to face ${requiredHeading}°.`;
         }
@@ -157,7 +162,7 @@ function checkDirection() {
 // Function to adjust pitch based on heading difference
 function adjustPitch(headingDifference, tolerance) {
     // If the audio context is not initialized, exit
-    if (!audioCtx || !oscillator) return;
+    if (!audioCtx) return;
 
     // Map the heading difference to pitch: greater difference = lower pitch
     const minPitch = Tone.Frequency("C2").toFrequency();
@@ -167,8 +172,12 @@ function adjustPitch(headingDifference, tolerance) {
     const normalizedDifference = Math.min(headingDifference / tolerance, 1); // 0 to 1
     const frequency = maxPitch - (normalizedDifference * (maxPitch - minPitch));
 
-    // Update the oscillator frequency
-    oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+    // Start or update the oscillator with the new frequency
+    if (headingDifference > tolerance) {
+        startOscillator(frequency);
+    } else {
+        stopOscillator();
+    }
 }
 
 // Function to display the current step information
