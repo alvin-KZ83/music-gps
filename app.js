@@ -108,6 +108,11 @@ function checkDirection() {
             headingDifference = 360 - headingDifference;
         }
 
+        // Debug: Log the current heading, required heading, and the calculated difference
+        console.log(`Current Heading: ${currentHeading}`);
+        console.log(`Required Heading: ${requiredHeading}`);
+        console.log(`Heading Difference: ${headingDifference}`);
+
         // Check if the difference is within the tolerance range
         if (headingDifference <= tolerance) {
             document.getElementById("step").innerText = `Good! Facing correct direction (${requiredHeading}°). Walk ${directions[currentStep].distance} meters.`;
@@ -116,6 +121,7 @@ function checkDirection() {
         }
     }
 }
+
 
 
 // Function to display the current step information
